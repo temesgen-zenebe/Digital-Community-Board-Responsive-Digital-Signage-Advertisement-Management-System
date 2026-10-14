@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+@keyframes slidePage {
+  0% {
+    opacity: 0.3;
+    transform: translateX(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-page {
+  animation: slidePage 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 20s linear infinite;
+}
+
+/* =========================================
+   DIGITAL COMMUNITY BOARD — QR CODE UI
+   Theme: Cream, Caramel, Deep Brown
+   ========================================= */
+
+:root {
+  --board-cream: #FFF0DE;
+  --board-light-cream: #FFF8EE;
+  --board-caramel: #D4A276;
+  --board-brown: #6F4518;
+  --board-dark-brown: #583101;
+  --board-border: #BC8A5F;
+
+  /* Standard QR Code size: identically scaled across all corkboard tiles and footer nav bar */
+  --qr-size: clamp(26px, 2vw, 32px);
+  --qr-size-small: var(--qr-size);
+  --qr-size-footer: var(--qr-size);
+  --qr-padding: 2px;
+  --qr-radius: 5px;
+
+  /* Unclipped Full Circular Pin Heads - compact circular tactile thumbtack */
+  --tile-pin-size: clamp(12px, 1.1vw, 14px);
+}
+
+/* Unclipped Full Circular Tile Pin Head */
+.tile-pin-head {
+  width: var(--tile-pin-size);
+  height: var(--tile-pin-size);
+  border-radius: 9999px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+/* QR code container inside an advertisement tile - identically sized to the footer nav bar QR code */
+.ad-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: 1px;
+
+  padding: 2px;
+  background: #FFFFFF;
+  border: 1px solid var(--board-brown);
+  border-radius: 5px;
+
+  width: fit-content;
+  height: fit-content;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(88, 49, 1, 0.08);
+}
+
+/* Actual QR code image / canvas */
+.ad-qr img,
+.ad-qr canvas,
+.ad-qr > div {
+  display: block;
+  width: var(--qr-size) !important;
+  height: var(--qr-size) !important;
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
+}
+
+/* Optional caption under the QR code */
+.ad-qr__caption {
+  margin: 0;
+  max-width: 34px;
+  color: var(--board-dark-brown);
+  font-family: inherit;
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.0;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Advertisement details and QR code row */
+.ad-contact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ad-contact-details {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ad-contact-details__phone {
+  color: var(--board-dark-brown);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Footer registration QR code - proportionally set inside footer nav bar */
+.footer-registration-qr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: fit-content;
+  height: fit-content;
+  padding: 2px;
+  background: #FFFFFF;
+  border: 1px solid var(--board-brown);
+  border-radius: 5px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(88, 49, 1, 0.08);
+}
+
+.footer-registration-qr img,
+.footer-registration-qr canvas,
+.footer-registration-qr > div {
+  display: block;
+  width: var(--qr-size) !important;
+  height: var(--qr-size) !important;
+  max-width: 34px;
+  max-height: 34px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+/* Footer registration text */
+.footer-registration {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.footer-registration__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--board-dark-brown);
+  font-family: inherit;
+}
+
+.footer-registration__title {
+  margin: 0;
+  font-size: clamp(11px, 0.85vw, 15px);
+  font-weight: 700;
+}
+
+.footer-registration__description {
+  margin: 0;
+  font-size: clamp(9px, 0.65vw, 12px);
+  line-height: 1.25;
+}
+
+/* TV viewport adaptations */
+@media (min-width: 3000px) {
+  :root {
+    --qr-size: 36px;
+    --qr-size-small: 36px;
+    --qr-size-footer: 36px;
+    --tile-pin-size: 16px;
+  }
+}
+
+/* Smaller screens */
+@media (max-width: 900px) {
+  :root {
+    --qr-size: 28px;
+    --qr-size-small: 28px;
+    --qr-size-footer: 28px;
+    --tile-pin-size: 12px;
+  }
+
+  .ad-contact-row {
+    gap: 4px;
+  }
+
+  .footer-registration {
+    gap: 5px;
+  }
+}

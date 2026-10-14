@@ -1,0 +1,7 @@
+{
+  "name": "Community Board Analytics & Visual Insights",
+  "description": "Interactive data visualization dashboard and executive summary of the Community Board hyperlocal advertising platform, store performance, and category demand.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
