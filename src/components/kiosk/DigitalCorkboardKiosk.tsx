@@ -12,6 +12,7 @@ import {
 } from '../../data/findingsData';
 import { PinDetailModal } from './PinDetailModal';
 import { RegisterScreenModal } from './RegisterScreenModal';
+import { StoreSpecialsModal } from './StoreSpecialsModal';
 import { QRCodeCanvas } from '../common/QRCodeCanvas';
 import {
   Sun,
@@ -46,11 +47,25 @@ import {
   Users,
   Heart,
   Laptop,
+  Flame,
 } from 'lucide-react';
 
-interface DigitalCorkboardKioskProps {
+export interface BoardDisplayConfig {
+  storeName: string;
+  storeAddress: string;
+  boardId: string;
+  status?: string;
+  screenType?: string;
+}
+
+export interface DigitalCorkboardKioskProps {
   onExitFullscreen?: () => void;
   isEmbedded?: boolean;
+  boardConfig?: BoardDisplayConfig;
+  initialSlideInterval?: number;
+  onOpenStoreDashboard?: () => void;
+  onOpenManageList?: (boardId: string) => void;
+  allListings?: ListingCardItem[];
 }
 
 // Category icon helper matching master design reference
@@ -224,6 +239,11 @@ export const ALL_BOARD_LISTINGS: ListingCardItem[] = [
 export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
   onExitFullscreen,
   isEmbedded = false,
+  boardConfig: propBoardConfig,
+  initialSlideInterval = 10,
+  onOpenStoreDashboard,
+  onOpenManageList,
+  allListings,
 }) => {
   // Navigation dropdown states: 'none' | 'market' | 'display' | 'filters' | 'settings'
   type DropdownType = 'none' | 'market' | 'display' | 'filters' | 'settings';
@@ -234,7 +254,7 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
   const [selectedTvProfileId, setSelectedTvProfileId] = useState<'auto' | '55' | '65' | '75' | '85' | '98'>('75');
 
   // Slide time in seconds (configurable: 5, 10, 15, 20, 30)
-  const [slideInterval, setSlideInterval] = useState<number>(10);
+  const [slideInterval, setSlideInterval] = useState<number>(initialSlideInterval);
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0); // 0 to 100%
@@ -242,6 +262,7 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCardForDetail, setSelectedCardForDetail] = useState<ListingCardItem | null>(null);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
+  const [isSpecialsModalOpen, setIsSpecialsModalOpen] = useState<boolean>(false);
   const [revealedPhoneId, setRevealedPhoneId] = useState<string | null>(null);
   const [copiedBoardId, setCopiedBoardId] = useState<boolean>(false);
 
@@ -310,8 +331,9 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
 
         if (pinId) {
           const trimmedPinId = pinId.trim();
-          // Resolve from ALL_BOARD_LISTINGS pool (standard 1×1, wide 2×1, wide 3×1, featured 2×2)
-          const found = ALL_BOARD_LISTINGS.find(
+          // Resolve from combined pool (user-created pins + standard 1×1, wide 2×1, wide 3×1, featured 2×2)
+          const fullLookupPool = [...(allListings || []), ...ALL_BOARD_LISTINGS];
+          const found = fullLookupPool.find(
             (p) =>
               p.id === trimmedPinId ||
               String(p.id).toLowerCase() === trimmedPinId.toLowerCase()
@@ -346,15 +368,15 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
       window.removeEventListener('popstate', checkUrlParams);
       window.removeEventListener('hashchange', checkUrlParams);
     };
-  }, []);
+  }, [allListings]);
 
-  // Board details
+  // Board details (from prop or default to Salam Market flagship)
   const boardConfig = {
-    storeName: 'Salam Market — Las Vegas',
-    storeAddress: '4750 W Flamingo Rd, Las Vegas, NV 89103',
-    boardId: 'SM-LV-001',
-    status: 'Online',
-    screenType: 'Commercial 4K Smart Display',
+    storeName: propBoardConfig?.storeName || 'Salam Market — Las Vegas',
+    storeAddress: propBoardConfig?.storeAddress || '4750 W Flamingo Rd, Las Vegas, NV 89103',
+    boardId: propBoardConfig?.boardId || 'SM-LV-001',
+    status: propBoardConfig?.status || 'Online',
+    screenType: propBoardConfig?.screenType || 'Commercial 4K Smart Display',
   };
 
   // Base URL for deep links encoded in QR codes
@@ -372,11 +394,12 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
     return 'https://communityboard.local/';
   };
 
-  const registrationUrl = `${getBaseAppUrl()}?register=${encodeURIComponent(boardConfig.boardId)}`;
+  const registrationUrl = `${getBaseAppUrl()}?manage=${encodeURIComponent(boardConfig.boardId)}`;
 
   // 4. Standard 1×1 Square Advertisements Pool (Row 1: 5 items, Row 2: 3 items, Row 3: 7 items = 15 total items per slide)
+  const activeBasePool = allListings || SAMPLE_CORKBOARD_LISTINGS;
   const STANDARD_1X1_POOL = [
-    ...SAMPLE_CORKBOARD_LISTINGS.filter(
+    ...activeBasePool.filter(
       (item) => item.gridSize !== '2x2' && item.gridSize !== '2x1'
     ),
     ...WIDE_3X1_POOL.map((item) => ({ ...item, gridSize: '1x1' as const })),
@@ -393,11 +416,20 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
   const itemsPerSlide = 15;
   const totalSlides = Math.max(1, Math.ceil(filtered1x1Pool.length / itemsPerSlide));
 
-  // Determine current slide items
+  // Determine current slide items with user-created listings included
+  const allFeatured2x2 = [
+    ...activeBasePool.filter((item) => item.gridSize === '2x2'),
+    ...FEATURED_2X2_POOL,
+  ];
   const slideFeatured2x2 =
-    FEATURED_2X2_POOL[currentSlideIndex % FEATURED_2X2_POOL.length];
+    allFeatured2x2[currentSlideIndex % allFeatured2x2.length];
+
+  const allWide2x1 = [
+    ...activeBasePool.filter((item) => item.gridSize === '2x1'),
+    ...WIDE_2X1_POOL,
+  ];
   const slideWide2x1 =
-    WIDE_2X1_POOL[currentSlideIndex % WIDE_2X1_POOL.length];
+    allWide2x1[currentSlideIndex % allWide2x1.length];
 
   const startIdx = (currentSlideIndex % totalSlides) * itemsPerSlide;
   const rawStandard15 = filtered1x1Pool.slice(startIdx, startIdx + itemsPerSlide);
@@ -1253,8 +1285,8 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
           {/* Thin vertical caramel divider */}
           <div className="h-8 w-px bg-[#D4A276] mx-1 hidden md:block shrink-0" />
 
-          {/* Group 2: Displaying at: Store Name & Physical Address */}
-          <div className="hidden sm:flex items-center gap-2 min-w-0 shrink">
+          {/* Group 2: Displaying at: Store Name & Physical Address + Store Specials */}
+          <div className="flex items-center gap-2 min-w-0 shrink">
             <div className="w-7 h-7 rounded-lg bg-[#FFEDD8] border border-[#D4A276] flex items-center justify-center text-amber-800 shrink-0">
               <Store className="w-3.5 h-3.5 text-[#583101]" />
             </div>
@@ -1265,10 +1297,20 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
               <p className="font-serif font-bold text-xs text-[#583101] truncate leading-tight">
                 {boardConfig.storeName}
               </p>
-              <p className="text-[10px] text-[#8B5E34] truncate leading-tight hidden lg:block">
+              <p className="text-[10px] text-[#8B5E34] truncate leading-tight hidden xl:block">
                 {boardConfig.storeAddress}
               </p>
             </div>
+
+            {/* Store Specials action button */}
+            <button
+              onClick={() => setIsSpecialsModalOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#FFEDD8] hover:bg-[#F3D5B5] text-[#583101] border border-[#D4A276] text-[10px] sm:text-[11px] font-bold shadow-2xs transition-colors cursor-pointer ml-1 shrink-0"
+              title="View host store specials list and post daily deals"
+            >
+              <Flame className="w-3.5 h-3.5 text-red-600 fill-red-600 animate-pulse" />
+              <span>Store Specials</span>
+            </button>
           </div>
 
           {/* Thin vertical caramel divider */}
@@ -1328,6 +1370,8 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
         onClose={() => setIsRegisterModalOpen(false)}
         boardConfig={boardConfig}
         registrationUrl={registrationUrl}
+        onOpenStoreDashboard={onOpenStoreDashboard}
+        onOpenManageList={onOpenManageList}
       />
 
       {/* 
@@ -1337,6 +1381,16 @@ export const DigitalCorkboardKiosk: React.FC<DigitalCorkboardKioskProps> = ({
         item={selectedCardForDetail}
         onClose={() => setSelectedCardForDetail(null)}
         storeName={boardConfig.storeName}
+      />
+
+      {/* 
+        STORE SPECIALS MODAL (When bottom footer Store Specials button is clicked)
+      */}
+      <StoreSpecialsModal
+        isOpen={isSpecialsModalOpen}
+        onClose={() => setIsSpecialsModalOpen(false)}
+        storeName={boardConfig.storeName}
+        onOpenStoreDashboard={onOpenStoreDashboard}
       />
     </div>
   );

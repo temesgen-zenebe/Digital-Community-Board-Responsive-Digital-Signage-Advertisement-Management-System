@@ -26,6 +26,8 @@ interface RegisterScreenModalProps {
     screenType: string;
   };
   registrationUrl: string;
+  onOpenStoreDashboard?: () => void;
+  onOpenManageList?: (boardId: string) => void;
 }
 
 export const RegisterScreenModal: React.FC<RegisterScreenModalProps> = ({
@@ -33,6 +35,8 @@ export const RegisterScreenModal: React.FC<RegisterScreenModalProps> = ({
   onClose,
   boardConfig,
   registrationUrl,
+  onOpenStoreDashboard,
+  onOpenManageList,
 }) => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedBoardId, setCopiedBoardId] = useState(false);
@@ -124,67 +128,92 @@ export const RegisterScreenModal: React.FC<RegisterScreenModalProps> = ({
             </div>
           </div>
 
-          {/* QR Code & Direct Registration Link Box */}
-          <div className="bg-white border-2 border-[#D4A276] rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4.5 shadow-xs">
-            {/* Scannable QR Code */}
-            <div className="flex flex-col items-center justify-center p-2.5 bg-[#FFFDF9] border border-[#BC8A5F] rounded-xl shadow-2xs shrink-0">
-              <QRCodeCanvas
-                value={registrationUrl}
-                size={120}
-                className="w-30 h-30 object-contain block"
-                darkColor="#24140A"
-                lightColor="#FFFFFF"
-                errorCorrectionLevel="L"
-                ariaLabel="Scan QR code to register this screen"
-              />
-              <span className="text-[9px] font-bold tracking-wider uppercase text-[#8B5E34] mt-1.5">
-                Scan With Phone
+          {/* QR Code & Direct Registration / Manage Your List Box */}
+          <div className="bg-white border-2 border-[#D4A276] rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4 shadow-xs">
+            {/* Scannable & Clickable Compact QR Code */}
+            <div
+              onClick={() => {
+                onClose();
+                if (onOpenManageList) onOpenManageList(boardConfig.boardId);
+              }}
+              className="flex flex-col items-center justify-center p-2 bg-[#FFFDF9] border border-[#BC8A5F] hover:border-[#8B4513] rounded-xl shadow-2xs shrink-0 cursor-pointer group transition-all hover:scale-105 active:scale-95"
+              title="Click or scan QR code to manage your list and post flyers on this screen"
+            >
+              <div className="w-[60px] h-[60px] flex items-center justify-center">
+                <QRCodeCanvas
+                  value={registrationUrl}
+                  size={54}
+                  className="w-[54px] h-[54px] object-contain block group-hover:opacity-90"
+                  darkColor="#24140A"
+                  lightColor="#FFFFFF"
+                  errorCorrectionLevel="L"
+                  ariaLabel="Scan or click QR code to manage your list and post flyers"
+                />
+              </div>
+              <span className="text-[9px] font-bold tracking-wider uppercase text-[#8B5E34] group-hover:text-[#8B4513] mt-1 flex items-center gap-1">
+                <span>Scan or Click</span>
               </span>
             </div>
 
-            {/* Registration Details */}
+            {/* Registration & Manage Your List Details */}
             <div className="flex-1 min-w-0 text-center sm:text-left space-y-2">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B5E34]">
-                  Unique Screen Identifier
-                </span>
-                <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
-                  <code className="text-sm font-mono font-bold bg-[#FFF0DE] px-2.5 py-1 rounded-md border border-[#D4A276] text-[#583101]">
-                    {boardConfig.boardId}
-                  </code>
-                  <button
-                    onClick={handleCopyBoardId}
-                    className="p-1.5 rounded-md bg-[#FFF0DE] hover:bg-[#F3D5B5] border border-[#D4A276] text-[#583101] text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                    title="Copy Board ID"
-                  >
-                    {copiedBoardId ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5 text-[#8B5E34]" />
-                    )}
-                    <span className="text-[11px]">{copiedBoardId ? 'Copied' : 'Copy'}</span>
-                  </button>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#8B5E34]">
+                    Unique Screen Identifier
+                  </span>
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-0.5">
+                    <code className="text-sm font-mono font-bold bg-[#FFF0DE] px-2.5 py-0.5 rounded-md border border-[#D4A276] text-[#583101]">
+                      {boardConfig.boardId}
+                    </code>
+                    <button
+                      onClick={handleCopyBoardId}
+                      className="p-1 rounded-md bg-[#FFF0DE] hover:bg-[#F3D5B5] border border-[#D4A276] text-[#583101] text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Copy Board ID"
+                    >
+                      {copiedBoardId ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-[#8B5E34]" />
+                      )}
+                      <span className="text-[10px]">{copiedBoardId ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Direct Action to Manage Your List */}
+                {onOpenManageList && (
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenManageList(boardConfig.boardId);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-[#8B4513] hover:from-amber-600 hover:to-[#72370E] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
+                  >
+                    <span>Manage Your List / Post Flyer</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               <p className="text-xs text-[#8B5E34] leading-relaxed">
-                Scan this QR code with any smartphone camera or tablet to register this screen to your merchant dashboard, adjust slideshow speed, and approve flyers.
+                Scan or click this QR code to access the specific <strong>Manage Your List</strong> portal for screen <strong>{boardConfig.boardId}</strong>. View live flyers, post new community listings with fast checkout, and receive 1-second instant SuperAdmin activation.
               </p>
 
-              <div className="pt-1">
+              <div className="pt-0.5 flex flex-wrap gap-2 justify-center sm:justify-start">
                 <button
                   onClick={handleCopyLink}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#583101] hover:bg-[#6F4518] text-[#FFFDF9] text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#583101] hover:bg-[#6F4518] text-[#FFFDF9] text-[11px] font-semibold shadow-2xs transition-colors cursor-pointer"
                 >
                   {copiedLink ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Registration Link Copied!</span>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span>Direct Link Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Copy Direct Registration Link</span>
+                      <Copy className="w-3 h-3 text-amber-300" />
+                      <span>Copy Direct Portal Link</span>
                     </>
                   )}
                 </button>
@@ -233,21 +262,49 @@ export const RegisterScreenModal: React.FC<RegisterScreenModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-[#FFF8EE] border-t border-[#D4A276]/50 px-5 py-3 flex items-center justify-between gap-3 shrink-0">
+        <div className="bg-[#FFF8EE] border-t border-[#D4A276]/50 px-5 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <button
             onClick={handleTestConnection}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D4A276] hover:bg-[#FFEDD8] text-xs font-semibold text-[#583101] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#D4A276] hover:bg-[#FFEDD8] text-xs font-semibold text-[#583101] transition-colors cursor-pointer w-full sm:w-auto justify-center"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-[#8B5E34] ${testSuccess ? 'animate-spin' : ''}`} />
-            <span>{testSuccess ? 'Connection Verified (200 OK)' : 'Ping Display Network'}</span>
+            <span>{testSuccess ? 'Hardware Verified (200 OK)' : 'Ping Display Network'}</span>
           </button>
 
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-[#583101] hover:bg-[#6F4518] text-[#FFFDF9] text-xs font-bold shadow-xs transition-colors cursor-pointer"
-          >
-            Done
-          </button>
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {onOpenStoreDashboard && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenStoreDashboard();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-[#583101] border border-amber-300 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Store className="w-3.5 h-3.5 text-[#8B4513]" />
+                <span className="hidden sm:inline">Store Portal</span>
+              </button>
+            )}
+
+            {onOpenManageList && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenManageList(boardConfig.boardId);
+                }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-[#8B4513] hover:from-amber-700 hover:to-[#72370E] text-[#FFFDF9] text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                <Tv className="w-3.5 h-3.5" />
+                <span>Register & Open List</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg bg-[#583101] hover:bg-[#6F4518] text-[#FFFDF9] text-xs font-bold shadow-xs transition-colors cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>

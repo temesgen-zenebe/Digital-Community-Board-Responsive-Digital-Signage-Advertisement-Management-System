@@ -91,6 +91,9 @@ export interface ListingCardItem {
   imageUrl?: string; // User-provided image
   imageAlt?: string;
   gridSize?: TileGridSize; // Screen-size independent relative grid units
+  targetStoreIds?: string[]; // Multiple store preferences selected during creation
+  durationDays?: number; // Minimum 3 to Maximum 90 days
+  totalCost?: number; // Total calculated listing price
 }
 
 // Logical placeholder image resolver: if user provided imageUrl, use it; otherwise provide a context-aware placeholder
